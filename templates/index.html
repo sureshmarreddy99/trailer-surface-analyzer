@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trailer Graphic Surface Analyzer</title>
+</head>
+<body>
+    <h1>Trailer Graphic Surface Analyzer</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit">Upload and Analyze</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+
+    {% if input_image_url %}
+        <h2>Input Image</h2>
+        <img src="{{ input_image_url }}" width="500">
+    {% endif %}
+
+    {% if output_image_url %}
+        <h2>Annotated Image</h2>
+        <img src="{{ output_image_url }}" width="900">
+    {% endif %}
+
+    {% if result %}
+        <h2>Layout</h2>
+        <p><strong>Type:</strong> {{ result.layout.label }}</p>
+        <p><strong>Reason:</strong> {{ result.layout.reasoning }}</p>
+
+        <h2>Surface Area</h2>
+        <p><strong>Primary surface:</strong> {{ result.surface_area_in2 }} in² / {{ result.surface_area_ft2 }} ft²</p>
+
+        <h2>Select Graphic Areas</h2>
+
+        {% if result.elements %}
+            {% for el in result.elements %}
+                <label>
+                    <input
+                        type="checkbox"
+                        class="element-checkbox"
+                        data-area-in2="{{ el.area_in2 }}"
+                        data-area-ft2="{{ el.area_ft2 }}"
+                    >
+                    Element {{ el.id }} —
+                    {{ el.area_in2 }} in² /
+                    {{ el.area_ft2 }} ft²
+                    ({{ el.pct }}% of surface)
+                </label>
+                <br>
+            {% endfor %}
+
+            <h3>Total Selected Graphic Area</h3>
+            <p><strong>In square inches:</strong> <span id="total-in2">0.00</span> in²</p>
+            <p><strong>In square feet:</strong> <span id="total-ft2">0.00</span> ft²</p>
+        {% else %}
+            <p>No graphic elements detected.</p>
+        {% endif %}
+    {% endif %}
+
+    <script>
+        function updateTotalArea() {
+            let totalIn2 = 0;
+            let totalFt2 = 0;
+
+            document.querySelectorAll(".element-checkbox:checked").forEach(function(box) {
+                totalIn2 += parseFloat(box.dataset.areaIn2 || 0);
+                totalFt2 += parseFloat(box.dataset.areaFt2 || 0);
+            });
+
+            const totalIn2El = document.getElementById("total-in2");
+            const totalFt2El = document.getElementById("total-ft2");
+
+            if (totalIn2El) totalIn2El.textContent = totalIn2.toFixed(2);
+            if (totalFt2El) totalFt2El.textContent = totalFt2.toFixed(2);
+        }
+
+        document.querySelectorAll(".element-checkbox").forEach(function(box) {
+            box.addEventListener("change", updateTotalArea);
+        });
+    </script>
+</body>
+</html>
